@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Select Polygon Vertices</title>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+    html {
+        height: 100%;
+        margin: 0px;
+        padding: 0px
+    }
+    
+    #text {
+        background-color:#eeeeee;
+        height: 300px;
+        float:left;
+        padding:10px;	 	 
+    }    
+   
+    #map-canvas {
+        height: 100%;
+        margin: 0px;
+        height:300px;
+        width:300px;
+        float:left;
+        padding:5px;	      
+        
+    }
+    </style>
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script>
+function initialize() {
+    var mapOptions = {
+        disableDoubleClickZoom: true,
+        scrollwheel: false,
+        draggableCursor: 'crosshair',
+        zoom: 18,
+        center: new google.maps.LatLng(-26.1306, 28.165)
+    };
+
+    var map = new google.maps.Map(document.getElementById('map-canvas'),
+        mapOptions);
+        
+    var update_timeout = null;
+
+    google.maps.event.addListener(map, 'click', function(event) {
+        update_timeout = setTimeout(function(){
+            var div = document.getElementById('text');
+            div.innerHTML = event.latLng.toString() + "<br>" + div.innerHTML;
+        }, 500);
+
+    });
+    
+    google.maps.event.addListener(map, 'dblclick', function (event) {
+        clearTimeout(update_timeout);
+        url = 'https://maps.googleapis.com/maps/api/geocode/json?latlng=' + event.latLng.lat()+','+event.latLng.lng()+'&key=AIzaSyDrkpShIXDSUW9H4r2EhU62KmEVsloMYS4'
+        $.getJSON(url, function(data) {
+            var div = document.getElementById('text');
+            div.innerHTML = data.results[0].formatted_address + "<br>" + div.innerHTML;
+            console.log(data.results[0].formatted_address)    
+        });
+        var marker = new google.maps.Marker({
+            position: event.latLng,
+            map: map
+        });
+    });
+};
+
+
+
+google.maps.event.addDomListener(window, 'load', initialize);
+
+    </script>
+  </head>
+  <body>
+    <div style="width:100%">
+        <div id="map-canvas"></div>
+        <div id="text"></div>        
+	</div>
+  </body>
+</html>

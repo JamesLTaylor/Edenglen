@@ -1,0 +1,39 @@
+street,number,contributor,message,fill_color
+George Fajan Rd,2,TRUE,<b>Complex</b>:<br>No info.,#808080
+Van Der Walt Rd,38,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+George Fajans Rd,6,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Edendale Rd E,37,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Van Der Walt Rd,36,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Van Der Walt Rd,34,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Edendale Rd E,35,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Edendale Rd E,34,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Edendale Rd E,32,FALSE,<b>NON-CONTRIBUTOR</b>:<br>Please consider helping the road closure.,#FF0000
+Edendale Rd E,30,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Philip Medalie Rd,15,FALSE,<b>NON-CONTRIBUTOR</b>:<br>Please consider helping the road closure.,#FF0000
+Philip Medalie Rd,13,FALSE,<b>NON-CONTRIBUTOR</b>:<br>Please consider helping the road closure.,#FF0000
+Edendale Rd E,36,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Van Der Walt Rd,28,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Van Der Walt Rd,26,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Philip Medalie Rd,11,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Philip Medalie Rd,9,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Philip Medalie Rd,7,FALSE,<b>NON-CONTRIBUTOR</b>:<br>Please consider helping the road closure.,#FF0000
+Philip Medalie Rd,5,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Philip Medalie Rd,3,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Van Der Walt Rd,24,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Van Der Walt Rd,22,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Van Der Walt Rd,20,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Van Der Walt Rd,18,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Van Der Walt Rd,16,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Van Der Walt Rd,14,FALSE,<b>NON-CONTRIBUTOR</b>:<br>Please consider helping the road closure.,#FF0000
+Van Der Walt Rd,12,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Maree Cres,11,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Maree Cres,9,FALSE,<b>NON-CONTRIBUTOR</b>:<br>Please consider helping the road closure.,#FF0000
+Maree Cres,7,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Palliser Rd,59,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Maree Cres,3,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Van Der Walt Rd,3,FALSE,<b>NON-CONTRIBUTOR</b>:<br>Please consider helping the road closure.,#FF0000
+Palliser Rd,65,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Van Der Walt Rd,10,FALSE,<b>NON-CONTRIBUTOR</b>:<br>Please consider helping the road closure.,#FF0000
+Van Der Walt Rd,8,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00
+Van Der Walt Rd,6,FALSE,<b>NON-CONTRIBUTOR</b>:<br>Please consider helping the road closure.,#FF0000
+Van Der Walt Rd,4,TRUE,<b>CONTRIBUTOR</b>:<br>Thank you for your support.,#00FF00

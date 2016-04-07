@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>ESRC Contributors</title>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #outer {
+            width: 100%;
+            height: 100%;
+        }
+        #map_outer {
+            width: 100%;        
+            max-width:1200px;
+            height: 95%;
+            max-height: 720px;
+            margin: auto;
+            padding: 0px;
+        }
+        #map {
+            width: 58%;
+            min-width:300px;
+            min-height:300px;
+            float: left;  
+            padding: 1%;            
+            height: calc(98% - 30px);
+        }
+        #map_right{
+            width: 38%;
+            padding: 1%;
+            height: auto;
+            float:left;  
+            height: calc(98% - 30px);
+        }
+        
+        #heading {
+            width: 100%;
+            height: 30px;
+            margin: auto;
+            overflow: auto;
+            background-color: #DD0000;
+        }
+        #content {
+            float: left;
+        }
+    </style>   
+        
+    
+  </head>
+  <body>
+    <div id="outer">
+        <div id="map_outer">
+            <div id="heading"><b>DISCLAIMER:</b> This is a test of functionality, the data in the map does not reflect actual data.  Please contact the <a href="http://www.edenglensouthclosure.co.za">Edenglen Sourth Road Closure</a> if you have any questions.</div>
+        
+            <div id="map"></div>
+            <div id="map_right">
+            <p>The map shows some information about the Edenlen South Road Clusure.</p>
+            <p>The current layer gives information about which residents of the closure contribute and which do not.  Zoom into the map until you see borders around the properties and click on a property to get more information</p>
+            <p><b>NB: This is test data and does not reflect actual contributor status.</b></p></div>
+        </div>
+    </div>
+    
+    <script src="getPolygonDataAuto.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDrkpShIXDSUW9H4r2EhU62KmEVsloMYS4">
+    </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script src="map2.js"></script>
+    <script>
+        window.onload = function(){
+            initMap();
+            makePolys();
+            setPolys(polygonsWithBorder)
+        };
+    </script>        
+    
+  </body>
+</html>
