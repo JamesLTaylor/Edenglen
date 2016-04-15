@@ -6,8 +6,8 @@ var polygonsWithBorder = [];
 function initMap() {
     var mapOptions = {
         disableDoubleClickZoom: true,
-        zoom: 18,
-        center: new google.maps.LatLng(-26.131471, 28.166651)
+        zoom: 16,
+        center: new google.maps.LatLng(-26.13446146639315, 28.172528743743896)
     };
     
     map = new google.maps.Map(document.getElementById('map'),
@@ -67,6 +67,27 @@ function makePolys() {
         });        
     }
 }
+
+/**
+* 
+*/ 
+function makeAndSetBoundingPoly()
+{
+    var arr = [];        
+    for (var j=0; j < boundingPolygonData.length; j++) {
+        arr.push( new google.maps.LatLng(boundingPolygonData[j][0], boundingPolygonData[j][1] ) );        
+    }
+    boundingPolygon = new google.maps.Polygon({
+        paths: arr,            
+        strokeColor: '#000000',
+        strokeOpacity: 0.8,
+        strokeWeight: 4,
+        fillColor: '#000000',
+        fillOpacity: 0
+    });
+    boundingPolygon.setMap(map)
+}
+
 
 function setPolys(polys)
 {

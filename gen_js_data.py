@@ -25,7 +25,7 @@ all_lines = []
 #f.close()
 #all_lines += new_lines
 
-f = open(r"C:\Dev\Edenglen\data_esrc\all_with_addr.txt", 'r')
+f = open(r"C:\Dev\Edenglen\data_esrc\final.txt", 'r')
 new_lines = f.readlines()
 f.close()
 all_lines += new_lines
@@ -87,7 +87,7 @@ result += [']',';']
 ss = "".join(result)
 
 
-f = open(r"C:\Dev\Edenglen\data_esrc\getPolygonDataAuto.js", 'w')
+f = open(r"C:\Dev\Edenglen\getPolygonDataAuto.js", 'w')
 f.write(ss)
 f.close()
     

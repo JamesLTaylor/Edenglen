@@ -176,6 +176,50 @@ def get_address(lat, lng):
     result = json.loads(response.read())
     return result['results'][0]['formatted_address']
     
+def write_poly_js(esrc_poly, filename):
+    """write the bounding polygon into a javascript file for use in web display
+    """
+    all_lines = ["var boundingPolygonData = ["]
+    for (lat, lng) in esrc_poly:
+        all_lines[-1] += "[" + str(lat) + ", " + str(lng) + "],\n"
+        all_lines.append("")
+        
+    all_lines.pop()
+    all_lines[-1] = all_lines[-1][:-2] + "]"
+    f = open(filename, 'w')
+    f.writelines(all_lines)
+    f.close() 
+    
+
+def remove_props_outside(bounding_poly, file_in, file_out):
+    bounding_path = mplPath.Path(bounding_poly)
+    f = open(file_in, 'r')
+    all_lines = f.readlines()
+    f.close()
+    interior = False
+    new_lines = []
+    next_address = []
+    for (i, line) in enumerate(all_lines):
+        if line[0]!='[' and line[0]!='(':
+            if interior:
+                new_lines += next_address
+            next_address = [line]            
+        elif line[0]=='[':
+            next_address.append(line)
+            [lat, lng] = all_lines[i+1].split(',',1)
+            lat = float(lat.translate(None, ' ()[]'))
+            lng = float(lng.translate(None, ' ()[]'))
+            interior = bounding_path.contains_point([lat, lng])
+            if not interior:
+                print("removing: " + next_address[0])
+        else:
+            next_address.append(line)
+            
+    f = open(file_out, 'w')
+    f.writelines(new_lines)
+    f.close() 
+            
+            
     
 def add_addresses(file_in, file_out):
     f = open(file_in, 'r')
@@ -253,16 +297,20 @@ def get_properties_in_poly(bounding_poly, save_maps=False):
 # files
 #==============================================================================
 bounding_poly_file = r"C:\Dev\Edenglen\data_esrc\ESRC polygon.txt"
+output_js_poly_file = r"C:\Dev\Edenglen\getBoundingPoly.js"
 map_path = r"C:\Dev\Edenglen\images"
 output_file = r"C:\Dev\Edenglen\data_esrc\unique_no_addr.txt"
 output_file_snapped = r"C:\Dev\Edenglen\data_esrc\unique_no_addr_snapped.txt"
 output_file_with_addr = r"C:\Dev\Edenglen\data_esrc\all_with_addr.txt"
+output_file_with_addr_final = r"C:\Dev\Edenglen\data_esrc\final.txt"
 api_key = "AIzaSyDrkpShIXDSUW9H4r2EhU62KmEVsloMYS4"
 # Get the ESRC polygon
 
 esrc_poly = get_bounding_poly(bounding_poly_file)
+#write_poly_js(esrc_poly)
 #get_properties_in_poly(esrc_poly, save_maps=False)
 #snap_points.in_file(output_file, output_file_snapped)
-add_addresses(output_file_snapped, output_file_with_addr)
+#add_addresses(output_file_snapped, output_file_with_addr)
+remove_props_outside(esrc_poly, output_file_with_addr, output_file_with_addr_final)
 
             
