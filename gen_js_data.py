@@ -11,23 +11,32 @@ def find_address(street, number):
 
     """
     street_lower = street.translate(None, ' ').lower()
+    number_lower = number.translate(None, ' ').lower()
     for row in house_info_tab:
-        if row[0].translate(None, ' ').lower()==street_lower and row[1]==number:
+        if (row[0].translate(None, ' ').lower()==street_lower and 
+                row[1].translate(None, ' ').lower()==number_lower):
             return (row[3], row[4])
             
     raise Exception(street + " " + str(number) + " not found")            
 
-f = open('polygondata1_snapped.txt', 'r')
-all_lines = f.readlines()
+all_lines = []
+#f = open('polygondata1_snapped.txt', 'r')
+#new_lines = f.readlines()
+#f.close()
+#all_lines += new_lines
+
+f = open(r"C:\Dev\Edenglen\data_esrc\all_with_addr.txt", 'r')
+new_lines = f.readlines()
 f.close()
+all_lines += new_lines
 
 f = open("house_info.csv",'r')
 house_info = f.readlines()
 f.close()
 house_info_tab = [row[:-1].split(',') for row in house_info]
 house_info_tab.pop(0)
-for row in house_info_tab:
-    row[1] = int(row[1])
+#for row in house_info_tab:
+#    row[1] = int(row[1])
 
 
 
@@ -46,6 +55,8 @@ for (i, line) in enumerate(all_lines):
         
         result += list("[" + lat + ", " + lng + "],\n")
         
+    elif line[0]=='[':
+        pass        
         
     else:
         if (i>0):
@@ -54,8 +65,15 @@ for (i, line) in enumerate(all_lines):
         newpoly = True
         address = line.split(',')[0]        
         (number, street) = address.split(' ',1)
-        number = int(number)
-        (msg, fill_color) = find_address(street, number)
+        try:
+            (msg, fill_color) = find_address(street, number)
+        except:
+            color_r = int(np.random.uniform(0, 255))
+            color_b = int(np.random.uniform(0, 255))
+            fill_color = "#" + hex(color_r)[2:].zfill(2).upper() + "00" + hex(color_b)[2:].zfill(2).upper()
+            #fill_color = "#0000FF"
+            msg = "No info in data base"
+            
         result += list("{address: '" + address + "',\n")
         result += list("msg: '" + msg + "',\n")
         result += list("fill_color: '" + fill_color + "',\n")        
@@ -69,7 +87,7 @@ result += [']',';']
 ss = "".join(result)
 
 
-f = open('getPolygonDataAuto.js', 'w')
+f = open(r"C:\Dev\Edenglen\data_esrc\getPolygonDataAuto.js", 'w')
 f.write(ss)
 f.close()
     
