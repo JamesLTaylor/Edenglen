@@ -1,8 +1,11 @@
+import get_corners
+import snap_points
+
 import cv2
 import numpy as np
-import get_corners
 import matplotlib.path as mplPath
 import urllib2
+import json
 
 
 def get_property_contours(img_color):
@@ -127,10 +130,10 @@ def property_coords(filename, center, width_deg, height_deg,
     return new_properties
             
     
-def get_esrc_poly():
+def get_bounding_poly(filename):
     """ Get the coordinates of the polygon that decribes the border of the ESRC
     """
-    f = open("ESRC polygon.txt", 'r')    
+    f = open(filename, 'r')    
     all_lines = f.readlines()
     f.close()
     esrc_poly = []
@@ -148,8 +151,7 @@ def save_image(filename, center):
     lat = center[0]
     lng = center[1]
     
-    STATIC_BASE_URL = "https://maps.googleapis.com/maps/api/staticmap"
-    api_key = "AIzaSyDrkpShIXDSUW9H4r2EhU62KmEVsloMYS4"
+    STATIC_BASE_URL = "https://maps.googleapis.com/maps/api/staticmap"    
     imageurl = (STATIC_BASE_URL + "?" + 
                 "center=" + str(lat) + "," + str(lng) + "&" + 
                 "zoom=18&size=640x480&scale=2&style=feature:poi|element:labels|visibility:off&style=feature:road|element:labels|visibility:off"
@@ -160,41 +162,107 @@ def save_image(filename, center):
     f.write(response.read())
     f.close()   
     
-
-# Get the ESRC polygon
-esrc_poly = get_esrc_poly()
-bbPath = mplPath.Path(esrc_poly)
-# get a bounding rectangle
-zoom = 18
-mapWidth = 640
-mapHeight = 480
-top_left = [np.max(esrc_poly, axis=0)[0], np.min(esrc_poly, axis=0)[1]]
-centerPoint = get_corners.G_LatLng(*top_left)
-corners = get_corners.getCorners(centerPoint, zoom, mapWidth, mapHeight)
-width_deg = corners['E'] - corners['W']
-height_deg = corners['N'] - corners['S']
-top_left[0] += height_deg/2  
-top_left[1] -= width_deg/2
-
-n_rows = np.ceil(0.5 + 2*(np.max(esrc_poly, axis=0)[0] - np.min(esrc_poly, axis=0)[0]) / height_deg)
-n_cols = np.ceil(0.5 + 2*(np.max(esrc_poly, axis=0)[1] - np.min(esrc_poly, axis=0)[1]) / width_deg)
-
-existing_properties =  np.zeros((0,2))
-all_lines = []
-for i in range(int(n_rows)):#range(3,4):
-    for j in range(int(n_cols)):#range(3,5):
-        center = [top_left[0] - i*height_deg/2, top_left[1] + j*width_deg/2]
-        interior = bbPath.contains_point(center)
-        if interior:
-            filename = "C:\Dev\Edenglen\images\map_" + str(i).zfill(2) + "_" + str(j).zfill(2) + ".png"
-            print(str(i) + ", " + str(j))
-            #save_image(filename, center)            
-            new_properties = property_coords(filename, center, width_deg, height_deg, mapWidth, mapHeight, existing_properties, all_lines)            
-            existing_properties = np.vstack((existing_properties, new_properties))
+    
+def get_address(lat, lng):
+    """ Get the formatted address
+    """
+    STATIC_BASE_URL = "https://maps.googleapis.com/maps/api/geocode/json"    
+    url = (STATIC_BASE_URL + "?" + 
+                "latlng=" + str(lat) + "," + str(lng) + 
+                "&result_type=" + "street_address"
+                "&key=" + api_key)
+                            
+    response = urllib2.urlopen(url)
+    result = json.loads(response.read())
+    return result['results'][0]['formatted_address']
+    
+    
+def add_addresses(file_in, file_out):
+    f = open(file_in, 'r')
+    all_lines = f.readlines()
+    f.close()
+    
+    new_lines = []
+    for (i, line) in enumerate(all_lines):
+        if len(line)>0 and not line[0]=='(' and not line[0]=='[':
+            if line.startswith("99 Nowhere Rd"):
+                [lat, lng] = all_lines[i+1].split(',',1)
+                lat = float(lat.translate(None, ' ()[]'))
+                lng = float(lng.translate(None, ' ()[]'))
+                address = get_address(lat, lng)
+                print(address)
+                new_lines.append(address + "\n")
+            else:
+                new_lines.append(line)
+        else:
+            new_lines.append(line)
             
-f = open("C:\Dev\Edenglen\data_esrc\unique_no_addr.txt", 'w')
-all_lines = [line + '\n' for line in all_lines]
-f.writelines(all_lines)
-f.close()
+    f = open(file_out, 'w')
+    f.writelines(new_lines)
+    f.close()            
+                
+                
+def get_properties_in_poly(bounding_poly, save_maps=False):
+    """ Writes a file with all the unique locations within or near the boundary of 
+    the bounding polygon
+    
+    Args:
+        bounding_poly:
+        save_maps: False uses maps already saved, True loads the required maps 
+            from google
+    """
+    bbPath = mplPath.Path(bounding_poly)
+    # get a bounding rectangle
+    zoom = 18
+    mapWidth = 640
+    mapHeight = 480
+    top_left = [np.max(esrc_poly, axis=0)[0], np.min(esrc_poly, axis=0)[1]]
+    centerPoint = get_corners.G_LatLng(*top_left)
+    corners = get_corners.getCorners(centerPoint, zoom, mapWidth, mapHeight)
+    width_deg = corners['E'] - corners['W']
+    height_deg = corners['N'] - corners['S']
+    top_left[0] += height_deg/2  
+    top_left[1] -= width_deg/2
+    
+    n_rows = np.ceil(0.5 + 2*(np.max(esrc_poly, axis=0)[0] - np.min(esrc_poly, axis=0)[0]) / height_deg)
+    n_cols = np.ceil(0.5 + 2*(np.max(esrc_poly, axis=0)[1] - np.min(esrc_poly, axis=0)[1]) / width_deg)
+    
+    existing_properties =  np.zeros((0,2))
+    all_lines = []
+    for i in range(int(n_rows)):#range(3,4):
+        for j in range(int(n_cols)):#range(3,5):
+            center = [top_left[0] - i*height_deg/2, top_left[1] + j*width_deg/2]
+            interior = bbPath.contains_point(center)
+            if interior:
+                mapfilename = map_path + "\map_" + str(i).zfill(2) + "_" + str(j).zfill(2) + ".png"
+                print(str(i) + ", " + str(j))
+                if save_maps:
+                    save_image(mapfilename, center)            
+                new_properties = property_coords(mapfilename, center, width_deg, height_deg, mapWidth, mapHeight, existing_properties, all_lines)            
+                existing_properties = np.vstack((existing_properties, new_properties))
+                
+    f = open(output_file, 'w')
+    all_lines = [line + '\n' for line in all_lines]
+    f.writelines(all_lines)
+    f.close()
+    
+    
+
+
+#==============================================================================
+# files
+#==============================================================================
+bounding_poly_file = r"C:\Dev\Edenglen\data_esrc\ESRC polygon.txt"
+map_path = r"C:\Dev\Edenglen\images"
+output_file = r"C:\Dev\Edenglen\data_esrc\unique_no_addr.txt"
+output_file_snapped = r"C:\Dev\Edenglen\data_esrc\unique_no_addr_snapped.txt"
+output_file_with_addr = r"C:\Dev\Edenglen\data_esrc\all_with_addr.txt"
+api_key = "AIzaSyDrkpShIXDSUW9H4r2EhU62KmEVsloMYS4"
+# Get the ESRC polygon
+
+esrc_poly = get_bounding_poly(bounding_poly_file)
+#get_properties_in_poly(esrc_poly, save_maps=False)
+#snap_points.in_file(output_file, output_file_snapped)
+add_addresses(output_file_snapped, output_file_with_addr)
 
             
