@@ -8,6 +8,107 @@ import urllib2
 import json
 
 
+def get_points_near_line(x0, x1, m, c, img, dist):
+    """
+    """
+    points = []
+    for x in range(x0, x1+1):
+        y = m * x + c 
+        for i in range(-dist, dist+1):
+            shifted_y = int(y)+i
+            if shifted_y>=0 and shifted_y<img.shape[0] and img[shifted_y, x]>0:
+                points.append([x, shifted_y])
+    return np.array(points)
+    
+def get_best_fit_line_h(p1, p2, img_orig):
+    """
+    """
+    # check if the line is more horizontal or vertical
+    
+    if abs(p1[0]-p2[0])>abs(p1[1]-p2[1]):        
+        horizontal = True
+        img = img_orig
+        
+    else:
+        horizontal = False
+        p1 = (p1[1], p1[0])
+        p2 = (p2[1], p2[0])
+        img = img_orig.copy()
+        img = np.transpose(img)
+        
+    if p1[0]>p2[0]:
+        p_temp = p1
+        p1 = p2
+        p2 = p_temp
+    m = (float(p2[1])-p1[1])/(p2[0]-p1[0])
+    c = p1[1] - m * p1[0]
+    
+    data = get_points_near_line(p1[0]+7, p2[0]-7, m, c, img, dist=7)
+    if len(data) > 30:
+        x = np.hstack((data[:,0:1], np.ones((len(data),1))))
+        y = data[:,1:]
+        m, c = np.linalg.lstsq(x, y)[0]    
+        
+        data = get_points_near_line(p1[0]+2, p2[0]-2, m, c, img, dist=2)
+        x = np.hstack((data[:,0:1], np.ones((len(data),1))))
+        y = data[:,1:]
+        m, c = np.linalg.lstsq(x, y)[0]
+        m = m[0]
+        c = c[0]
+    
+    if horizontal:
+        return (m,c)
+    else:
+        if abs(m)<1e-9:
+            new_m = np.inf
+            new_c = c
+        else:
+            new_m = 1/m
+            new_c = -c/m            
+        return (new_m, new_c)
+    
+    
+def refine_contours(cnt, img):
+    """
+    """
+    lines = []
+    for i in range(len(cnt)):
+        p1 = (cnt[i][0][0],cnt[i][0][1])
+        if i > 0:
+            p2 = (cnt[i-1][0][0],cnt[i-1][0][1])
+        else:
+            p2 = (cnt[-1][0][0],cnt[-1][0][1])
+            
+        (m, c) = get_best_fit_line_h(p1, p2, img)
+        lines.append([m, c])
+    new_cnt = []    
+    for i in range(len(cnt)):    
+        m1 = lines[i][0]
+        c1 = lines[i][1]
+        if i > 0:
+            m2 = lines[i-1][0]
+            c2 = lines[i-1][1]
+        else:
+            m2 = lines[-1][0]
+            c2 = lines[-1][1]
+            
+        if m1 == np.inf:
+            x = c1
+            y = m2*c1 + c2
+        elif m2 == np.inf:
+            x = c2
+            y = m1*c2 + c1
+        else:            
+            x = (c2-c1)/(m1-m2)
+            y = m1 * x + c1
+            
+        if x<0 or x >2000 or y<0 or y > 2000:
+            aaa = 1            
+        new_cnt.append([[x,y]])
+        
+    return np.array(new_cnt)
+
+
 def get_property_contours(img_color):
     """
     """
@@ -16,14 +117,15 @@ def get_property_contours(img_color):
     img = cv2.cvtColor(img_color,cv2.COLOR_BGR2GRAY)
     img_blur = cv2.GaussianBlur(img,(5,5),0)
     diff = img-img_blur
+    (ret, diff) = cv2.threshold(diff,127,255,0)
     kernel = np.ones((3,3),np.uint8)
     dilation = cv2.dilate(diff,kernel,iterations = 1)
     dilation = cv2.erode(dilation,kernel,iterations = 1)
-    #cv2.imshow("dilation", dilation)
+#    cv2.imshow("dilation", dilation)
     
     ret,thresh = cv2.threshold(dilation,127,255,0)
     (im2, contours, hierarchy) = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-    #cv2.imshow("diff", diff)
+#    cv2.imshow("diff", diff)
     
     # remove short contours and contours that do not have a big enough area.
     min_perimeter = 100
@@ -32,6 +134,7 @@ def get_property_contours(img_color):
     min_area_perimeter = 20 # acts as a size constraint as well as somewhat of a shape constraint
     
     contours_keep = []
+    contours_draw = []
     centroids = []
     contours_with_child = []
     for (i, cnt) in enumerate(contours):
@@ -44,26 +147,36 @@ def get_property_contours(img_color):
                 if area>min_area and area<max_area and (area/perimeter)>min_area_perimeter:
                     epsilon = 0.005*perimeter
                     approx = cv2.approxPolyDP(cnt,epsilon,True)
-                    contours_keep.append(approx)
+                    new_approx = refine_contours(approx, diff)
+                    contours_keep.append(new_approx)
+                    contours_draw.append(np.round(new_approx).astype(int))
                     centroids.append([M['m10']/M['m00'], M['m01']/M['m00']])
                     #print(area/perimeter)
         else:
             perimeter = cv2.arcLength(cnt,True)
             if perimeter>min_perimeter: 
                 contours_with_child.append(cnt)
+        
+#    img_disp = np.zeros(img_color.shape, dtype='uint8')
+#    img_disp[:,:,0] = diff
+#    img_disp[:,:,1] = diff
+#    img_disp[:,:,2] = diff    
+#    cv2.drawContours(img_disp, contours_draw, -1, (0,0,255), 1)
+#    cv2.imshow("approx polygons", img_disp)
     
+   
     #cnt = contours[13]
     #M = cv2.moments(cnt)
     
-    """
-    for cnt in contours:
-        img_copy = img.copy()
-        img_new = cv2.drawContours(img_copy, [cnt], -1, (0,255,0), 1)
-        cv2.imshow("boundaries", img_new)
-        key = cv2.waitKey()
-        if key==27:
-            break
-    """
+    
+#    for cnt in contours:
+#        img_copy = img.copy()
+#        img_new = cv2.drawContours(img_copy, [cnt], -1, (0,255,0), 1)
+#        cv2.imshow("boundaries", img_new)
+#        key = cv2.waitKey()
+#        if key==27:
+#            break
+    
     #cv2.drawContours(img_color, contours_with_child, -1, (0,0,255), 2)
     #
     return (contours_keep, centroids)
@@ -206,7 +319,7 @@ def remove_props_outside(bounding_poly, file_in, file_out):
             next_address = [line]            
         elif line[0]=='[':
             next_address.append(line)
-            [lat, lng] = all_lines[i+1].split(',',1)
+            [lat, lng] = all_lines[i].split(',',1)
             lat = float(lat.translate(None, ' ()[]'))
             lng = float(lng.translate(None, ' ()[]'))
             interior = bounding_path.contains_point([lat, lng])
@@ -260,7 +373,7 @@ def get_properties_in_poly(bounding_poly, save_maps=False):
     zoom = 18
     mapWidth = 640
     mapHeight = 480
-    top_left = [np.max(esrc_poly, axis=0)[0], np.min(esrc_poly, axis=0)[1]]
+    top_left = [np.max(bounding_poly, axis=0)[0], np.min(bounding_poly, axis=0)[1]]
     centerPoint = get_corners.G_LatLng(*top_left)
     corners = get_corners.getCorners(centerPoint, zoom, mapWidth, mapHeight)
     width_deg = corners['E'] - corners['W']
@@ -268,13 +381,13 @@ def get_properties_in_poly(bounding_poly, save_maps=False):
     top_left[0] += height_deg/2  
     top_left[1] -= width_deg/2
     
-    n_rows = np.ceil(0.5 + 2*(np.max(esrc_poly, axis=0)[0] - np.min(esrc_poly, axis=0)[0]) / height_deg)
-    n_cols = np.ceil(0.5 + 2*(np.max(esrc_poly, axis=0)[1] - np.min(esrc_poly, axis=0)[1]) / width_deg)
+    n_rows = np.ceil(0.5 + 2*(np.max(bounding_poly, axis=0)[0] - np.min(bounding_poly, axis=0)[0]) / height_deg)
+    n_cols = np.ceil(0.5 + 2*(np.max(bounding_poly, axis=0)[1] - np.min(bounding_poly, axis=0)[1]) / width_deg)
     
     existing_properties =  np.zeros((0,2))
     all_lines = []
     for i in range(int(n_rows)):#range(3,4):
-        for j in range(int(n_cols)):#range(3,5):
+        for j in range(int(n_cols)):#range(3,5):            
             center = [top_left[0] - i*height_deg/2, top_left[1] + j*width_deg/2]
             interior = bbPath.contains_point(center)
             if interior:
@@ -292,25 +405,25 @@ def get_properties_in_poly(bounding_poly, save_maps=False):
     
     
 
-
-#==============================================================================
-# files
-#==============================================================================
-bounding_poly_file = r"C:\Dev\Edenglen\data_esrc\ESRC polygon.txt"
-output_js_poly_file = r"C:\Dev\Edenglen\getBoundingPoly.js"
-map_path = r"C:\Dev\Edenglen\images"
-output_file = r"C:\Dev\Edenglen\data_esrc\unique_no_addr.txt"
-output_file_snapped = r"C:\Dev\Edenglen\data_esrc\unique_no_addr_snapped.txt"
-output_file_with_addr = r"C:\Dev\Edenglen\data_esrc\all_with_addr.txt"
-output_file_with_addr_final = r"C:\Dev\Edenglen\data_esrc\final.txt"
-api_key = "AIzaSyDrkpShIXDSUW9H4r2EhU62KmEVsloMYS4"
-# Get the ESRC polygon
-
-esrc_poly = get_bounding_poly(bounding_poly_file)
-#write_poly_js(esrc_poly)
-#get_properties_in_poly(esrc_poly, save_maps=False)
-#snap_points.in_file(output_file, output_file_snapped)
-#add_addresses(output_file_snapped, output_file_with_addr)
-remove_props_outside(esrc_poly, output_file_with_addr, output_file_with_addr_final)
+if __name__ == "__main__":
+    #==============================================================================
+    # files
+    #==============================================================================
+    bounding_poly_file = r"C:\Dev\Edenglen\data_esrc\ESRC polygon.txt"
+    output_js_poly_file = r"C:\Dev\Edenglen\getBoundingPoly.js"
+    map_path = r"C:\Dev\Edenglen\images"
+    output_file = r"C:\Dev\Edenglen\data_esrc\unique_no_addr.txt"
+    output_file_snapped = r"C:\Dev\Edenglen\data_esrc\unique_no_addr_snapped.txt"
+    output_file_with_addr = r"C:\Dev\Edenglen\data_esrc\all_with_addr.txt"
+    output_file_with_addr_final = r"C:\Dev\Edenglen\data_esrc\final.txt"
+    api_key = "AIzaSyDrkpShIXDSUW9H4r2EhU62KmEVsloMYS4"
+    # Get the ESRC polygon
+    
+    esrc_poly = get_bounding_poly(bounding_poly_file)
+    #write_poly_js(esrc_poly)
+    get_properties_in_poly(esrc_poly, save_maps=False)
+    snap_points.in_file(output_file, output_file_snapped)
+    #add_addresses(output_file_snapped, output_file_with_addr)
+    #remove_props_outside(esrc_poly, output_file_with_addr, output_file_with_addr_final)
 
             
