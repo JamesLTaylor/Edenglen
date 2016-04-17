@@ -20,6 +20,7 @@ def get_points_near_line(x0, x1, m, c, img, dist):
                 points.append([x, shifted_y])
     return np.array(points)
     
+    
 def get_best_fit_line_h(p1, p2, img_orig):
     """
     """
@@ -50,6 +51,8 @@ def get_best_fit_line_h(p1, p2, img_orig):
         m, c = np.linalg.lstsq(x, y)[0]    
         
         data = get_points_near_line(p1[0]+2, p2[0]-2, m, c, img, dist=2)
+        
+    if len(data) > 30:    
         x = np.hstack((data[:,0:1], np.ones((len(data),1))))
         y = data[:,1:]
         m, c = np.linalg.lstsq(x, y)[0]
@@ -101,9 +104,7 @@ def refine_contours(cnt, img):
         else:            
             x = (c2-c1)/(m1-m2)
             y = m1 * x + c1
-            
-        if x<0 or x >2000 or y<0 or y > 2000:
-            aaa = 1            
+          
         new_cnt.append([[x,y]])
         
     return np.array(new_cnt)
@@ -149,7 +150,7 @@ def get_property_contours(img_color):
                     approx = cv2.approxPolyDP(cnt,epsilon,True)
                     new_approx = refine_contours(approx, diff)
                     contours_keep.append(new_approx)
-                    contours_draw.append(np.round(new_approx).astype(int))
+                    #contours_draw.append(np.round(new_approx).astype(int))
                     centroids.append([M['m10']/M['m00'], M['m01']/M['m00']])
                     #print(area/perimeter)
         else:
@@ -220,6 +221,7 @@ def property_coords(filename, center, width_deg, height_deg,
             for (x, y) in cnt:
                 x_deg = center[1] + width_deg * (x - mapWidth/2)/mapWidth
                 y_deg = center[0] - height_deg * (y - mapHeight/2)/mapHeight
+#TODO: At some point x and y are coming through as arrays and writing as ([xx.xxxx], [xx.xxxx])                
                 all_lines.append("(" + str(y_deg) + ", " + str(x_deg) + ")")
                 #print(all_lines[-1])
 #        else:
@@ -279,15 +281,18 @@ def save_image(filename, center):
 def get_address(lat, lng):
     """ Get the formatted address
     """
-    STATIC_BASE_URL = "https://maps.googleapis.com/maps/api/geocode/json"    
-    url = (STATIC_BASE_URL + "?" + 
-                "latlng=" + str(lat) + "," + str(lng) + 
-                "&result_type=" + "street_address"
-                "&key=" + api_key)
-                            
-    response = urllib2.urlopen(url)
-    result = json.loads(response.read())
-    return result['results'][0]['formatted_address']
+    try:
+        STATIC_BASE_URL = "https://maps.googleapis.com/maps/api/geocode/json"    
+        url = (STATIC_BASE_URL + "?" + 
+                    "latlng=" + str(lat) + "," + str(lng) + 
+                    "&result_type=" + "street_address"
+                    "&key=" + api_key)
+                                
+        response = urllib2.urlopen(url)
+        result = json.loads(response.read())
+        return result['results'][0]['formatted_address']
+    except:
+        return "99 Nowhere Rd, Edenvale, 1613, South Africa"
     
 def write_poly_js(esrc_poly, filename):
     """write the bounding polygon into a javascript file for use in web display
@@ -338,7 +343,8 @@ def add_addresses(file_in, file_out):
     f = open(file_in, 'r')
     all_lines = f.readlines()
     f.close()
-    
+
+    f = open(file_out, 'w')    
     new_lines = []
     for (i, line) in enumerate(all_lines):
         if len(line)>0 and not line[0]=='(' and not line[0]=='[':
@@ -349,13 +355,16 @@ def add_addresses(file_in, file_out):
                 address = get_address(lat, lng)
                 print(address)
                 new_lines.append(address + "\n")
+                f.write(address + "\n")
             else:
                 new_lines.append(line)
+                f.write(line)
         else:
             new_lines.append(line)
+            f.write(line)
             
-    f = open(file_out, 'w')
-    f.writelines(new_lines)
+    #f = open(file_out, 'w')
+    #f.writelines(new_lines)
     f.close()            
                 
                 
@@ -386,8 +395,9 @@ def get_properties_in_poly(bounding_poly, save_maps=False):
     
     existing_properties =  np.zeros((0,2))
     all_lines = []
-    for i in range(int(n_rows)):#range(3,4):
-        for j in range(int(n_cols)):#range(3,5):            
+    for i in range(int(n_rows)):#range(int(n_rows)):#range(3,4):
+        for j in range(int(n_cols)):#range(int(n_cols)):#range(1,2):            
+            print(str(i) + ", " + str(j))
             center = [top_left[0] - i*height_deg/2, top_left[1] + j*width_deg/2]
             interior = bbPath.contains_point(center)
             if interior:
@@ -420,10 +430,10 @@ if __name__ == "__main__":
     # Get the ESRC polygon
     
     esrc_poly = get_bounding_poly(bounding_poly_file)
-    #write_poly_js(esrc_poly)
-    get_properties_in_poly(esrc_poly, save_maps=False)
-    snap_points.in_file(output_file, output_file_snapped)
-    #add_addresses(output_file_snapped, output_file_with_addr)
-    #remove_props_outside(esrc_poly, output_file_with_addr, output_file_with_addr_final)
+    #write_poly_js(esrc_poly, output_js_poly_file)
+    #get_properties_in_poly(esrc_poly, save_maps=True)
+    #snap_points.in_file(output_file, output_file_snapped)
+    add_addresses(output_file_snapped, output_file_with_addr)
+    remove_props_outside(esrc_poly, output_file_with_addr, output_file_with_addr_final)
 
             

@@ -50,7 +50,7 @@ def in_list(all_lines):
             dy[ind] = lng_mult*(vals[ind, 1] - vals[i,1])
             dist = np.sqrt(dx*dx + dy*dy)
         
-            replace = dist<2.0
+            replace = dist<3.0
 #            print(np.where(replace))
             
             avglat = np.mean(vals[replace, 0])

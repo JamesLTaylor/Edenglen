@@ -43,9 +43,9 @@ function makePolys() {
         
         polygons.push(new google.maps.Polygon({
             paths: arr,            
-            strokeColor: '#000000',
-            strokeOpacity: 0.8,
-            strokeWeight: 0,
+            strokeColor: fill_color,
+            strokeOpacity: 035,
+            strokeWeight: 1,
             fillColor: fill_color,
             fillOpacity: 0.35
         }));
@@ -53,7 +53,7 @@ function makePolys() {
             paths: arr,            
             strokeColor: '#000000',
             strokeOpacity: 0.8,
-            strokeWeight: 4,
+            strokeWeight: 1,
             fillColor: fill_color,
             fillOpacity: 0.35
         }));
